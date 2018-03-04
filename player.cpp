@@ -26,6 +26,8 @@ THANKS!!!
 
 */
 
+// howdy do
+
 Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
