@@ -12,18 +12,7 @@
 
 /*
 
-
-
 HI AARON!!!!!!!! CAN YOU SEE THIS ?!?!?!?!?!??!!?!!?!?!?!?! 
-
-
-PLEASE LET ME KNOW ?!?!?!?!?!!?
-
-
-THANKS!!!
-
-
-
 */
 
 // howdy do
@@ -32,11 +21,20 @@ Player::Player(Side side) {
     // Will be set to true in test_minimax.cpp.
     testingMinimax = false;
 
-    /*
-     * TODO: Do any initialization you need to do here (setting up the board,
-     * precalculating things, etc.) However, remember that you will only have
-     * 30 seconds.
-     */
+    board = new Board;
+    my_side = side;
+
+    if (side == WHITE)
+    {
+    	opposite_side = BLACK;
+    }
+    else
+    {
+    	opposite_side = WHITE;
+    }
+
+
+   
 }
 
 /*
@@ -58,10 +56,63 @@ Player::~Player() {
  * The move returned must be legal; if there are no valid moves for your side,
  * return nullptr.
  */
-Move *Player::doMove(Move *opponentsMove, int msLeft) {
+
+
+vector<Move*> Player::get_moves(Side side)
+{
+	vector<Move*> moves;
+	for (int i = 0; i<8; i++)
+	{
+		for (int j = 0; j < 8; j++)
+		{
+			Move* move = new Move(i, j);
+			if (board->checkMove(move, side) == true)
+			{
+				moves.push_back(move);
+			}
+			else
+			{
+				delete move;
+			}
+			
+		}
+	}
+	
+	return moves;
+
+}
+
+Move *Player::randomMove(vector<Move*> moves)
+{
+	unsigned int random = rand() % moves.size();
+	Move* my_move = moves[random];
+	return my_move;
+
+}
+
+Move *Player::doMove(Move *opponentsMove, int msLeft) 
+{
     /*
-     * TODO: Implement how moves your AI should play here. You should first
-     * process the opponent's opponents move before calculating your own move
-     */
-    return nullptr;
+    * TODO: Implement how moves your AI should play here. You should first
+    * process the opponent's opponents move before calculating your own move
+    */
+    if (msLeft == 0)
+    {
+    	return nullptr;
+    }
+
+
+	this->board->doMove(opponentsMove, opposite_side);
+
+
+	vector<Move*> moves = this->get_moves(this->my_side);
+	if (moves.size() == 0)
+	{
+		return nullptr;
+	}
+
+
+	Move* myMove = randomMove(moves);
+	this->board->doMove(myMove, my_side);
+	return myMove;
 }
