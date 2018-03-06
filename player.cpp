@@ -112,6 +112,23 @@ Move *Player::randomMove(vector<Move*> moves)
 
 }
 
+int Player::naiveHeuristic(Move* move)
+{
+	int my_tokens, opp_tokens, difference;
+
+	Board* copy = this->board->copy();
+	copy->doMove(move, my_side);
+
+	my_tokens = copy->count(my_side);
+	opp_tokens = copy->count(opposite_side);
+
+	difference = my_tokens - opp_tokens;
+
+	return difference;
+}
+
+
+
 
 int Player::heuristicScore(Move* move)
 {
@@ -171,10 +188,59 @@ int Player::heuristicScore(Move* move)
 
 
 	return (mobility * 1.5)  + (tokens_taken * 1.5) + corner + edge + bad;
+}
 
+
+
+
+Move * Player::minimax(int depth)
+{
+	vector<Move*> moves = this->get_moves(this->my_side);
+	Move* current_move;
+	Move* best_move;
+	int temp_score = -700;
+
+	for (unsigned int i =0; i < moves.size(); i++)
+	{
+		current_move = moves[i];
+		Board* copy = this->board->copy();
+		copy->doMove(current_move);
+		int our_score = naiveHeuristic(current_move);
+		vector<Move*> opp_moves = copy->get_moves(this->opposite_side);
+
+
+		if (opp_moves.size() == 0)
+		{
+			return current_move;
+		}
+
+		// looping thru opponent moves and storing their best move in best_opp_move
+		int best_opp_move = naiveHeuristic(opp_moves[0])
+		for (unsigned int j = 1; j<opp_moves.size(); j++)
+		{
+			int current_opp_move = naiveHeuristic(opp_moves[j]);
+			if (current_opp_move > best_opp_move)
+			{
+				best_opp_move = current_opp_move;
+			}
+		}
+
+		int aggregate = our_score - best_opp_move;
+		if (aggregate > temp_score)
+		{
+			best_move = current_move;
+			temp_score = aggregate;
+		}
+	}
+	return best_move;
 
 
 }
+
+
+
+
+
 
 Move *Player::doMove(Move *opponentsMove, int msLeft) 
 {

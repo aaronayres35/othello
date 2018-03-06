@@ -5,6 +5,14 @@
 
 // Use this file to test your minimax implementation (2-ply depth, with a
 // heuristic of the difference in number of pieces).
+
+
+
+
+
+
+
+
 int main(int argc, char *argv[]) {
 
     // Create board with example state. You do not necessarily need to use
