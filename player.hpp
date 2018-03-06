@@ -18,6 +18,8 @@ public:
 
     Board* board;
 
+    int get_num_moves(Side side);
+    int heuristicScore(Move* move);
     Move *randomMove(vector<Move*> moves);
     vector<Move*> get_moves(Side side);
     Move *doMove(Move *opponentsMove, int msLeft);
