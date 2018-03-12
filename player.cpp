@@ -75,6 +75,7 @@ int Player::get_num_moves(Side side)
 			}
 		}
 	}
+	//cerr << "number of moves ==" << count << endl;
 	return count;
 }
 
@@ -99,7 +100,8 @@ vector<Move*> Player::get_moves(Side side, Board* b)
 			
 		}
 	}
-	
+	//cerr << "checking-----" << endl;
+	//cerr << moves.size() << endl;
 	return moves;
 
 }
@@ -160,7 +162,7 @@ int Player::heuristicScore(Move* move, Board* board, Side side)
 	int tokens_before;
 	int tokens_after;
 	int tokens_taken;
-	tokens_before = this->board->count(side);
+	tokens_before = board->count(side);
 	tokens_after = copy->count(side);
 	tokens_taken = tokens_after - tokens_before;
 
@@ -173,28 +175,35 @@ int Player::heuristicScore(Move* move, Board* board, Side side)
 	y = move->y;
 	if ((x==0 && y == 0) || (x==7 && y==7) || (x==0 && y==7) || (x==7 && y==0))
 	{
-		corner = 30;
-		cerr << "CORNER" << endl;
+		corner = 90;
+		//cerr << "CORNER" << endl;
 		
 	}
 
-	//checking edges
-	int edge = 0;
-	if ( (x==0) || (x==7) || (y == 0) || (y==7) )
-	{
-		edge = 7;
-	}
+	
 
 	//checking *bad* spots
 	int bad = 0;
 	if ( (x==1 && y==1) || (x==6 && y==6) || (x==1 && y==6) || (x==6 && y ==1))
 	{
-		bad = -5;
+		bad = -10;
+	}
+	int other_bad = 0;
+	
+	if  ((x+y==1) || (x+y==13) || (x==0 && y==6) || (x==6 && y==0) || (x==1 && y==7) || (x==7 && y==1))
+	{
+		other_bad = -3;
+	}
+
+	//checking edges
+	int edge = 0;
+	if (    (  (x==0) || (x==7) || (y == 0) || (y==7)  ) && (other_bad == 0)  )
+	{
+		edge = 3;
 	}
 
 
-
-	return (mobility * 1.5)  + (tokens_taken * 1.5) + corner + edge + bad;
+	return (mobility * 2)  + (tokens_taken *0.75) + corner + edge + bad + other_bad;
 }
 
 
@@ -214,7 +223,13 @@ int Player::mini_score(int depth, int max_depth, Side side, Board* board)
 
 	while (depth < max_depth - 1)
 	{
+		//cerr << "in here" << endl;
 		vector<Move*> moves = get_moves(opp_side, board);
+		if (moves.size() == 0)
+		{
+			//cerr << "got here!" << endl;
+			return 1000;
+		}
 
 		
 		int best;
@@ -234,6 +249,10 @@ int Player::mini_score(int depth, int max_depth, Side side, Board* board)
 		board->doMove(moves[best_index], opp_side);
 
 		vector<Move*> our_moves = get_moves(side, board);
+		if (our_moves.size()==0)
+		{
+			return -100;
+		}
 		int our_best;
 		int our_best_index = 0;
 		int our_current;
@@ -251,6 +270,11 @@ int Player::mini_score(int depth, int max_depth, Side side, Board* board)
 		board->doMove(our_moves[our_best_index], side);
 	}
 	vector<Move*> moves1 = get_moves(opp_side, board);
+	if (moves1.size() == 0)
+	{
+		return 100;
+	}
+
 
 		
 	int best1;
@@ -273,28 +297,48 @@ int Player::mini_score(int depth, int max_depth, Side side, Board* board)
 	our_tokens = board->count(side);
 	return (our_tokens - opp_tokens);
 
-
-
 }
 
-/*
-Move* Player::minimax(int depth, int max_depth, Side side, Board* board)
+
+Move* Player::minimax(int depth, int max_depth, Side side, Board* b)
 {
-	vector<Move*> moves = get_moves(side, board);
-
-	for (unsigned int i=0; i<moves.size(); i++)
+	Side opp_side;
+	if (side == WHITE)
 	{
-		Board* copy = board->copy();
-		copy->doMove(moves[i], side);
-
+		opp_side = BLACK;
+	}
+	else
+	{
+		opp_side = WHITE;
 	}
 
+	int opp_moves;
+
+	vector<Move*> moves = get_moves(side, b);
+
+	int best_score= -100;
+	int index=0;
+	int current =-101;
+	for (unsigned int i=0; i<moves.size(); i++)
+	{
+		Board* copy = b->copy();
+		copy->doMove(moves[i], side);
+		opp_moves = get_num_moves(opp_side);
+		if (opp_moves == 0)
+		{
+			return moves[i];
+		}
+
+		current = mini_score(depth + 1, max_depth, side, copy);
+		if (current > best_score)
+		{
+			best_score = current;
+			index = i;
+		}
+	}
+    return moves[index];
 
 }
-*/
-
-
-
 
 
 
@@ -315,12 +359,12 @@ Move* Player::minimax_naive()
 	{
 		//cerr << "HI" << endl;
 		current_move = moves[i];
-		cerr << current_move->x << endl;
+		//cerr << current_move->x << endl;
 		Board* copy = this->board->copy();
 		copy->doMove(current_move, this->my_side);
 		
 		vector<Move*> opp_moves = this->get_moves(this->opposite_side, copy);
-		cerr<<opp_moves.size()<<endl;
+		//cerr<<opp_moves.size()<<endl;
 
 
 		if (opp_moves.size() == 0)
@@ -343,7 +387,7 @@ Move* Player::minimax_naive()
 		}
 
 		int aggregate = best_opp_move;
-		cerr << aggregate <<endl;
+		//cerr << aggregate <<endl;
 
 		if (aggregate > temp_score)
 		{	
@@ -375,14 +419,8 @@ int Player::spaces_left(Board* board)
 
 Move *Player::doMove(Move *opponentsMove, int msLeft) 
 {
-    /*
-    * TODO: Implement how moves your AI should play here. You should first
-    * process the opponent's opponents move before calculating your own move
-    */
-	//int best;
-	//int best_index = 0;
-	//int current;
-
+    
+	
     /*if (msLeft == 0)
     {
     	cerr << ":(" << endl;
@@ -394,37 +432,35 @@ Move *Player::doMove(Move *opponentsMove, int msLeft)
 	Move* myMove;
 
 	vector<Move*> moves = this->get_moves(this->my_side, this->board);
+	
 	if (moves.size() == 0)
 	{
+		//cerr << "zero moves" << endl;
 		return nullptr;
 	}
-
+	/*else if (moves.size() == 1)
+	{
+		cerr << "hi" << endl;
+		return moves[0];
+	}
+	*/
 
 	int remaining;
 	remaining = spaces_left(this->board);
-	if (remaining <= 4)
+	if (remaining <= 4) 
 	{
+		//cerr << "Here" << endl;
 		myMove = this->minimax_naive();
-		cerr << myMove << endl;
+		//cerr << myMove << endl;
 	}
-
 	
-	/*
+
 	else
 	{
-		best = heuristicScore(moves[0]);
-		for (unsigned int i = 1; i < moves.size(); i++)
-		{
-			current = heuristicScore(moves[1]);
-			if (current > best)
-			{
-				best = current;
-				best_index = i;
-			}
-		}
-		myMove = moves[best_index];
+		//cerr << "minim" << endl;
+		myMove = minimax(0, 4, this->my_side, this->board);
 	}
-	*/
+	
 	
 
 
